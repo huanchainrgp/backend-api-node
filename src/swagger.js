@@ -1,6 +1,8 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
+const serverUrl = process.env.SWAGGER_SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+
 const options = {
   definition: {
     openapi: '3.0.3',
@@ -8,9 +10,7 @@ const options = {
       title: 'Backend API',
       version: '0.1.0'
     },
-    servers: [
-      { url: 'http://localhost:' + (process.env.PORT || 3000) }
-    ],
+    servers: [{ url: serverUrl }],
     components: {
       securitySchemes: {
         bearerAuth: {

@@ -26,6 +26,13 @@ yarn dev
 
 Swagger UI: http://localhost:3000/docs
 
+### Configure Swagger server URL
+Set a production server for Swagger dropdown:
+```
+SWAGGER_SERVER_URL=https://api.yourdomain.com
+```
+If not set, it defaults to `http://localhost:PORT`.
+
 ### Auth Endpoints
 - Prisma:
   - Edit schema: `prisma/schema.prisma`
