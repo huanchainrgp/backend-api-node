@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { pool } from '../db.js';
+import { prisma } from '../prisma.js';
 import { requireAuth, signToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -43,15 +43,13 @@ router.post('/register', async (req, res) => {
 
   try {
     const passwordHash = await bcrypt.hash(password, 12);
-    const result = await pool.query(
-      'insert into users (email, password_hash) values ($1, $2) returning id, email, created_at',
-      [normalizedEmail, passwordHash]
-    );
-    const user = result.rows[0];
+    const user = await prisma.user.create({
+      data: { email: normalizedEmail, passwordHash }
+    });
     const token = signToken({ sub: user.id, email: user.email });
     res.status(201).json({ token, user: { id: user.id, email: user.email } });
   } catch (e) {
-    if (e.code === '23505') {
+    if (e.code === 'P2002') {
       return res.status(400).json({ error: 'email_in_use' });
     }
     return res.status(500).json({ error: 'server_error' });
@@ -88,13 +86,9 @@ router.post('/login', async (req, res) => {
   const normalizedEmail = String(email).toLowerCase();
 
   try {
-    const result = await pool.query(
-      'select id, email, password_hash from users where email=$1',
-      [normalizedEmail]
-    );
-    if (result.rowCount === 0) return res.status(401).json({ error: 'invalid_credentials' });
-    const user = result.rows[0];
-    const ok = await bcrypt.compare(password, user.password_hash);
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user) return res.status(401).json({ error: 'invalid_credentials' });
+    const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     const token = signToken({ sub: user.id, email: user.email });
     res.json({ token, user: { id: user.id, email: user.email } });
@@ -119,11 +113,12 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const result = await pool.query('select id, email, created_at from users where id=$1', [
-      req.user.sub
-    ]);
-    if (result.rowCount === 0) return res.status(404).json({ error: 'not_found' });
-    res.json({ user: result.rows[0] });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub },
+      select: { id: true, email: true, createdAt: true }
+    });
+    if (!user) return res.status(404).json({ error: 'not_found' });
+    res.json({ user });
   } catch {
     return res.status(500).json({ error: 'server_error' });
   }

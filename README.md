@@ -13,9 +13,10 @@ DATABASE_URL=postgresql://neondb_owner:npg_GfUC7lYZ8teR@ep-patient-boat-adpmgbkf
 JWT_SECRET=replace-with-a-long-random-secret
 ```
 
-2. Install dependencies:
+2. Install dependencies and generate Prisma client:
 ```
 yarn
+yarn prisma:generate
 ```
 
 3. Run dev server with hot reload:
@@ -26,6 +27,11 @@ yarn dev
 Swagger UI: http://localhost:3000/docs
 
 ### Auth Endpoints
+- Prisma:
+  - Edit schema: `prisma/schema.prisma`
+  - Push schema to DB: `yarn db:push`
+  - Create migration dev: `yarn prisma:migrate`
+  - Studio: `yarn prisma:studio`
 - POST `/api/auth/register` { email, password }
 - POST `/api/auth/login` { email, password }
 - GET `/api/auth/me` with `Authorization: Bearer <token>`
